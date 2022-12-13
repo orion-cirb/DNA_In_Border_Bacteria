@@ -30,4 +30,5 @@
 
 ### Version history
 
+Version 1 released
 
