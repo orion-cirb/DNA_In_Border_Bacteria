@@ -1,15 +1,18 @@
 # Foci_in_bacteria
 
-### En bref
+*Developed for:* Céline
 
-*Développé pour:*
-
-*Nom de l'équipe:*
-
-*Date:*
+*Team:* Espeli
 
 
-### Description de l'image entrante
 
-### Description du plugin
+
+### Image description
+
+### Plugin description
+
+### Dependencies
+
+### Version history
+
 
