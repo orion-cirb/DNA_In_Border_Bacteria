@@ -3,7 +3,7 @@
 * **Developed for:** Céline
 * **Team:** Espeli
 * **Date:** December 2022
-* * **Software:** Fiji
+* **Software:** Fiji
 
 
 ### Image description
