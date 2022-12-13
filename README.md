@@ -24,9 +24,9 @@
 
 ### Dependencies
 
-* 3DImageSuite Fiji plugin
-* CLIJ Fiji plugin
-* Omnipose conda env + bact_phase_omnitorch_0 model
+* **3DImageSuite** Fiji plugin
+* **CLIJ** Fiji plugin
+* **Omnipose** conda env + *bact_phase_omnitorch_0* model
 
 ### Version history
 
