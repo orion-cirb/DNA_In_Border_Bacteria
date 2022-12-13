@@ -1,8 +1,7 @@
 # Foci_in_bacteria
 
-*Developed for:* Céline
-
-*Team:* Espeli
+* *Developed for:* Céline
+* *Team:* Espeli
 
 
 
