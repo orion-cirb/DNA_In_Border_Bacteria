@@ -6,9 +6,11 @@
 * **Software:** Fiji
 
 
-### Image description
+### Images description
 
-3-channels image taken with a x60 objective:
+3D images taken with a x60 objective
+
+3-channels:
   1. *CFP:* foci
   2. *phiYFP:* foci
   3. *TL phase:* bacteria
