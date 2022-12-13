@@ -1,3 +1,5 @@
+## Foci_in_bacteria
+
 This is a minimal Maven project implementing an ImageJ 1.x plugin
 
 It is intended as an ideal starting point to develop new ImageJ 1.x plugins
