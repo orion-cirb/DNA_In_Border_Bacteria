@@ -8,12 +8,14 @@
 
 ### Image description
 
-3-channels image:
+3-channels image taken with a x60 objective:
   1. *CFP:* foci
   2. *phiYFP:* foci
   3. *TL phase:* bacteria
 
 ### Plugin description
+
+
 
 ### Dependencies
 
