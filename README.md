@@ -1,7 +1,9 @@
 # Foci_in_bacteria
 
 *Développé pour:*
+
 *Nom de l'équipe:*
+
 *Date:*
 
 
