@@ -10,6 +10,7 @@ import ij.plugin.Duplicator;
 import fiji.util.gui.GenericDialogPlus;
 import ij.plugin.RGBStackMerge;
 import ij.plugin.ZProjector;
+import ij.process.AutoThresholder;
 import java.awt.Color;
 import java.awt.Font;
 import java.io.BufferedWriter;
@@ -71,7 +72,9 @@ public class Tools {
     // Foci segmentation method
     private double fociDOGMin = 1;
     private double fociDOGMax = 2;
-    private String fociTh = "Otsu";
+    private String[] fociThMethods = AutoThresholder.getMethods();
+    public String foci1Th = fociThMethods[6];
+    public String foci2Th = fociThMethods[11];
     
     // Foci
     private double minFociSurface = 0.01;
@@ -293,7 +296,8 @@ public class Tools {
         gd.addMessage("Foci detection", Font.getFont("Monospace"), Color.blue);
         gd.addNumericField("Min foci surface (µm2): ", minFociSurface);
         gd.addNumericField("Max foci surface (µm2): ", maxFociSurface);
-        
+        gd.addChoice("Foci (CFP)    :",fociThMethods, foci1Th);
+        gd.addChoice("Foci (phiYFP) :",fociThMethods, foci2Th);
         gd.addMessage("Image calibration", Font.getFont("Monospace"), Color.blue);
         gd.addNumericField("XY calibration (µm):", cal.pixelWidth);
         gd.showDialog();
@@ -311,7 +315,8 @@ public class Tools {
         
         minFociSurface = (float) gd.getNextNumber();
         maxFociSurface = (float) gd.getNextNumber();
-        
+        foci1Th = gd.getNextChoice();
+        foci2Th = gd.getNextChoice();
         cal.pixelWidth = cal.pixelHeight = gd.getNextNumber();
         cal.pixelDepth = 1;
         pixelSurf = cal.pixelWidth*cal.pixelHeight;
@@ -375,7 +380,7 @@ public class Tools {
     /**
      * Find foci with DOG
      */
-    public Objects3DIntPopulation findFoci(ImagePlus img) {
+    public Objects3DIntPopulation findFoci(ImagePlus img, String fociTh) {
         ImagePlus imgFilter = DOG(img, fociDOGMin, fociDOGMax);
         ImagePlus imgBin = threshold(imgFilter, fociTh);
         imgBin.setCalibration(cal);
@@ -396,7 +401,7 @@ public class Tools {
     public ImagePlus DOG(ImagePlus img, double size1, double size2) {
         ClearCLBuffer imgCL = clij2.push(img);
         ClearCLBuffer imgCLDOG = clij2.create(imgCL);
-        clij2.differenceOfGaussian3D(imgCL, imgCLDOG, size1, size1, size1, size2, size2, size2);
+        clij2.differenceOfGaussian2D(imgCL, imgCLDOG, size1, size1, size2, size2);
         ImagePlus imgDOG = clij2.pull(imgCLDOG);
         clij2.release(imgCL);
         clij2.release(imgCLDOG);

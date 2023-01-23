@@ -132,7 +132,7 @@ public class Foci_Bacteria implements PlugIn {
                 
                 // Detect foci1
                 tools.print("- Detecting foci1 -");
-                Objects3DIntPopulation foci1Pop = tools.findFoci(imgFoci1);
+                Objects3DIntPopulation foci1Pop = tools.findFoci(imgFoci1, tools.foci1Th);
                 System.out.println(foci1Pop.getNbObjects() + " foci1 found");
                 tools.fociBactLink(bactPop, foci1Pop);
                 System.out.println(foci1Pop.getNbObjects() + " foci1 found in bacteria");
@@ -147,7 +147,7 @@ public class Foci_Bacteria implements PlugIn {
                 
                 // Detect foci
                 tools.print("- Detecting foci2 -");
-                Objects3DIntPopulation foci2Pop = tools.findFoci(imgFoci2);
+                Objects3DIntPopulation foci2Pop = tools.findFoci(imgFoci2, tools.foci2Th);
                 System.out.println(foci2Pop.getNbObjects() + " foci2 found");
                 tools.fociBactLink(bactPop, foci2Pop);
                 System.out.println(foci2Pop.getNbObjects() + " foci2 found in bacteria");
