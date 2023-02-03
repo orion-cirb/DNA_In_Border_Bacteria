@@ -1,6 +1,6 @@
-package FociBacteria_Tools.Cellpose;
+package DNA_In_Border_Bacteria.Cellpose;
 
-import FociBacteria_Tools.Cellpose.CellposeTaskSettings;
+import DNA_In_Border_Bacteria.Cellpose.CellposeTaskSettings;
 import java.util.ArrayList;
 
 public class CellposeTask {

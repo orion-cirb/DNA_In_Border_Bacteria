@@ -1,25 +1,26 @@
 # Foci_in_bacteria
 
-* **Developed for:** Céline
+* **Developed for:** Justine
 * **Team:** Espeli
-* **Date:** December 2022
+* **Date:** february 2023
 * **Software:** Fiji
 
 
 ### Images description
 
-3D images taken with a x60 objective
+2D/3D images taken with a x60 objective
 
 3 channels:
-  1. *CFP:* foci
-  2. *phiYFP:* foci
+  1. *DAPI:* DNA
+  2. *mCherry:* foci
   3. *TL phase:* bacteria
 
 ### Plugin description
 
-* Detect bacteria on the average intensity Z-projection of channel 3 with Omnipose
-* Detect foci on the max intensity Z-projection of channels 1 and 2 with DoG + Otsu threshold
-* In each bacterium, return distances between channel 1 and channel 2 foci and colocalization events
+* if 3D take middle Z
+* Detect bacteria in phase channel with ommiPose
+* Measure intensity in DAPI inside bacteria and on bacteria countours
+* Measure bateria volume
 
 
 ### Dependencies
@@ -30,5 +31,5 @@
 
 ### Version history
 
-Version 1 released on December 6, 2022
+Version 1 released on February 2, 2022
 

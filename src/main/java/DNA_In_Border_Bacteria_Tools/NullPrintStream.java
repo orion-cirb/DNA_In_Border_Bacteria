@@ -1,4 +1,4 @@
-package FociBacteria_Tools;
+package DNA_In_Border_Bacteria_Tools;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

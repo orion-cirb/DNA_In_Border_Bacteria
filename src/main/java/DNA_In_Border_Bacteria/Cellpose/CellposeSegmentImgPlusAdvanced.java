@@ -1,6 +1,6 @@
-package FociBacteria_Tools.Cellpose;
+package DNA_In_Border_Bacteria.Cellpose;
 
-import FociBacteria_Tools.Cellpose.CellposeTask;
+import DNA_In_Border_Bacteria.Cellpose.CellposeTask;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.io.FileSaver;

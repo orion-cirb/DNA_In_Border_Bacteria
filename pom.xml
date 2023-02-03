@@ -7,10 +7,10 @@
 
         
 	<groupId>cirb</groupId>
-	<artifactId>Foci_Bacteria</artifactId>
+	<artifactId>DNA_In_Border_Bacteria</artifactId>
 	<version>1.0.0</version>
         <packaging>jar</packaging>
-	<name>Foci_Bacteria</name>
+	<name>DNA_In_Border_Bacteria</name>
 	<description>
             Find foci in bacteria
         </description>
@@ -33,7 +33,7 @@
 	<properties>
                 <imagej.app.directory>/opt/Fiji.app/</imagej.app.directory>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<main-class>Foci_Bacteria_Omni.jar</main-class>
+		<main-class>DNA_In_Border_Bacteria.jar</main-class>
 	</properties>
 
 	<dependencies>

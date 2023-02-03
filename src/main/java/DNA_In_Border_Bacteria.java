@@ -1,5 +1,7 @@
-import FociBacteria_Tools.Tools;
+import DNA_In_Border_Bacteria_Tools.Tools;
 import ij.*;
+import ij.gui.WaitForUserDialog;
+import ij.plugin.Duplicator;
 import ij.plugin.PlugIn;
 import ij.plugin.ZProjector;
 import java.io.BufferedWriter;
@@ -26,16 +28,16 @@ import org.scijava.util.ArrayUtils;
 
 
 /**
- * Detect bacteria with OmniPose and foci with DOG
+ * Detect bacteria with OmniPose and DNA with DOG
+ * Measure bacteria size and intensity inside and on the border of bacteria
  * @author Orion-CIRB
  */
-public class Foci_Bacteria implements PlugIn {
+public class DNA_In_Border_Bacteria implements PlugIn {
     
     Tools tools = new Tools();
     private String imageDir = "";
     public String outDirResults = "";
-    public BufferedWriter distResults;
-    public BufferedWriter colocResults;
+    public BufferedWriter results;
    
     
     public void run(String arg) {
@@ -63,20 +65,12 @@ public class Foci_Bacteria implements PlugIn {
                 outDir.mkdir();
             }
             String header = "Image name\tBacterium ID\tBacterium area (µm2)\tBacterium length (µm)\t" +
-                     "Nb foci ch1\tNb foci ch2\tFocus channel\tFocus ID\tFocus-bacterium pole distance\t" +
-                     "Focus-focus 1 distance\tFocus-focus 2 distance\tFocus-focus 3 distance\tFocus-focus 4 distance\t" +
-                     "Focus-focus 5 distance\tFocus-focus 6 distance\n";
-            FileWriter fwDistResults = new FileWriter(outDirResults + "distances.xls", false);
-            distResults = new BufferedWriter(fwDistResults);
-            distResults.write(header);
-            distResults.flush();
-            header = "Image name\tBacterium ID\tBacterium area (µm2)\tBacterium length (µm)\t" +
-                     "Nb foci ch1\tNb foci ch2\tColocalization?\tColocalizing focus ch1 ID\tFocus ch1-bacterium pole distance\t" +
-                     "Colocalizing focus ch2 ID\tFocus ch2-bacterium pole distance\n";
-            FileWriter fwColocResults = new FileWriter(outDirResults + "colocalization.xls", false);
-            colocResults = new BufferedWriter(fwColocResults);
-            colocResults.write(header);
-            colocResults.flush();
+                     "DNA intensity inside\tDNA intensity border\n";
+            FileWriter fwDistResults = new FileWriter(outDirResults + "results.xls", false);
+            results = new BufferedWriter(fwDistResults);
+            results.write(header);
+            results.flush();
+           
             
             // Create OME-XML metadata store of the latest schema version
             ServiceFactory factory;
@@ -115,57 +109,34 @@ public class Foci_Bacteria implements PlugIn {
                 int indexCh = ArrayUtils.indexOf(channels, chs[0]);
                 System.out.println("- Opening bacteria channel " + chs[0] + " -");
                 ImagePlus bactStack = BF.openImagePlus(options)[indexCh];
-                ImagePlus imgBact = tools.doZProjection(bactStack, ZProjector.AVG_METHOD);
+                ImagePlus imgBact = (bactStack.getNSlices() == 1) ? new Duplicator().run(bactStack) : new Duplicator().run(bactStack, bactStack.getNSlices()/2, bactStack.getNSlices()/2);
                 tools.flush_close(bactStack);
                 
                 // Detect bacteria with Omnipose
                 tools.print("- Detecting bacteria -");
                 Objects3DIntPopulation bactPop = tools.omniposeDetection(imgBact);
                 System.out.println(bactPop.getNbObjects() + " bacteria found");
+                tools.flush_close(imgBact);
                 
-                // Open foci1 channel 1
+                // Open DNA channel 1
                 indexCh = ArrayUtils.indexOf(channels, chs[1]);
-                System.out.println("- Opening foci1 channel " + chs[1] + " -");
-                ImagePlus foci1Stack = BF.openImagePlus(options)[indexCh];
-                ImagePlus imgFoci1 = tools.doZProjection(foci1Stack, ZProjector.MAX_METHOD);
-                tools.flush_close(foci1Stack);
-                
-                // Detect foci1
-                tools.print("- Detecting foci1 -");
-                Objects3DIntPopulation foci1Pop = tools.findFoci(imgFoci1, tools.foci1Th);
-                System.out.println(foci1Pop.getNbObjects() + " foci1 found");
-                tools.fociBactLink(bactPop, foci1Pop);
-                System.out.println(foci1Pop.getNbObjects() + " foci1 found in bacteria");
-                tools.flush_close(imgFoci1);
-                
-                // Open foci2 channel
-                indexCh = ArrayUtils.indexOf(channels, chs[2]);
-                System.out.println("- Opening foci2 channel " + chs[2] + " -");
-                ImagePlus foci2Stack = BF.openImagePlus(options)[indexCh];
-                ImagePlus imgFoci2 = tools.doZProjection(foci2Stack, ZProjector.MAX_METHOD);
-                tools.flush_close(foci2Stack);
-                
-                // Detect foci
-                tools.print("- Detecting foci2 -");
-                Objects3DIntPopulation foci2Pop = tools.findFoci(imgFoci2, tools.foci2Th);
-                System.out.println(foci2Pop.getNbObjects() + " foci2 found");
-                tools.fociBactLink(bactPop, foci2Pop);
-                System.out.println(foci2Pop.getNbObjects() + " foci2 found in bacteria");
-                tools.flush_close(imgFoci2);
-                                
+                System.out.println("- Opening Dapi channel " + chs[1] + " -");
+                ImagePlus dnaStack = BF.openImagePlus(options)[indexCh];
+                ImagePlus imgDna = (dnaStack.getNSlices() == 1) ? new Duplicator().run(dnaStack) : new Duplicator().run(dnaStack, dnaStack.getNSlices()/2, dnaStack.getNSlices()/2);
+                tools.flush_close(dnaStack);
                 // Save results
                 tools.print("- Saving results -");
-                tools.saveResults(bactPop, foci1Pop, foci2Pop, rootName, distResults, colocResults);
+                tools.saveResults(bactPop, imgDna, rootName, outDirResults, results);
                 
                 // Save images
-                tools.drawResults(imgBact, bactPop, foci1Pop, foci2Pop, rootName, outDirResults);
-                tools.flush_close(imgBact);
+                tools.drawResults(imgDna, bactPop, "_bacteria.tif", rootName, outDirResults);
+                tools.flush_close(imgDna);
             }
-        
+            results.close();
             tools.print("--- All done! ---");
             
         }   catch (IOException | FormatException | DependencyException | ServiceException ex) {
-            Logger.getLogger(Foci_Bacteria.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(DNA_In_Border_Bacteria.class.getName()).log(Level.SEVERE, null, ex);
         }  
     }
 }    

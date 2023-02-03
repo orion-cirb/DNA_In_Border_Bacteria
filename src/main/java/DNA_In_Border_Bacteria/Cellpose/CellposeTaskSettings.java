@@ -1,4 +1,4 @@
-package FociBacteria_Tools.Cellpose;
+package DNA_In_Border_Bacteria.Cellpose;
 
 
 public class CellposeTaskSettings {
