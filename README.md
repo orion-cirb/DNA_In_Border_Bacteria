@@ -1,10 +1,9 @@
-# Foci_in_bacteria
+#  DNA_In_Border_Bacteria
 
 * **Developed for:** Justine
 * **Team:** Espeli
-* **Date:** february 2023
+* **Date:** February 2023
 * **Software:** Fiji
-
 
 ### Images description
 
@@ -12,16 +11,14 @@
 
 3 channels:
   1. *DAPI:* DNA
-  2. *mCherry:* foci
-  3. *TL phase:* bacteria
+  3. *TL phase:* Bacteria
 
 ### Plugin description
 
-* if 3D take middle Z
-* Detect bacteria in phase channel with ommiPose
-* Measure intensity in DAPI inside bacteria and on bacteria countours
-* Measure bateria volume
-
+* If 3D image, only keep middle z-slice
+* Detect bacteria with Ommipose
+* Measure bacteria length and area
+* Measure DAPI intensity in the middle and on the contour of bacteria
 
 ### Dependencies
 
@@ -31,5 +28,5 @@
 
 ### Version history
 
-Version 1 released on February 2, 2022
+Version 1 released on February 3, 2022
 
