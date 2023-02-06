@@ -8,9 +8,7 @@ import ij.io.FileSaver;
 import ij.measure.Calibration;
 import ij.plugin.Duplicator;
 import fiji.util.gui.GenericDialogPlus;
-import ij.gui.WaitForUserDialog;
 import ij.plugin.RGBStackMerge;
-import ij.plugin.ZProjector;
 import java.awt.Color;
 import java.awt.Font;
 import java.io.BufferedWriter;
@@ -28,15 +26,13 @@ import loci.plugins.util.ImageProcessorReader;
 import mcib3d.geom2.Object3DComputation;
 import mcib3d.geom2.Object3DInt;
 import mcib3d.geom2.Objects3DIntPopulation;
+import mcib3d.geom2.Objects3DIntPopulationComputation;
 import mcib3d.geom2.VoxelInt;
 import mcib3d.geom2.measurements.MeasureFeret;
 import mcib3d.geom2.measurements.MeasureIntensity;
 import mcib3d.geom2.measurements.MeasureVolume;
 import mcib3d.image3d.ImageHandler;
-import mcib3d.image3d.ImageInt;
-import mcib3d.image3d.ImageLabeller;
 import org.apache.commons.io.FilenameUtils;
-import net.haesleinhuepf.clij2.CLIJ2;
 
 
 /**
@@ -46,24 +42,22 @@ public class Tools {
     private final ImageIcon icon = new ImageIcon(this.getClass().getResource("/Orion_icon.png"));
       
     public Calibration cal = new Calibration();
-    String[] channelsName = {"Bacteria: ", "DNA ch1: "};
+    private double pixelSurf = 0;
+    String[] channelsName = {"Bacteria: ", "DNA: "};
     
      // Omnipose
-    private String omniposeEnvDirPath = "/opt/miniconda3/envs/omnipose";
-    private String omniposeModelsPath = System.getProperty("user.home")+"/.cellpose/models/";
+    private String omniposeEnvDirPath = IJ.isWindows()? System.getProperty("user.home")+"\\miniconda3\\envs\\omnipose" : "/opt/miniconda3/envs/omnipose";
+    private String omniposeModelsPath = IJ.isWindows()? System.getProperty("user.home")+"\\.cellpose\\models\\": System.getProperty("user.home")+"/.cellpose/models/";
     private String omniposeModel = "bact_phase_omnitorch_0";
-    private int omniposeDiameter = 10;
+    private int omniposeDiameter = 0;
     private int omniposeMaskThreshold = 0;
-    private double omniposeFlowThreshold = 0.4;
+    private double omniposeFlowThreshold = 0;
     private boolean useGpu = true;
     
     // Bacteria
-    private double minBactSurface = 2;
-    private double maxBactSurface = 50;
-    private float bactDilate = 0.35f;
-    
-    private final CLIJ2 clij2 = CLIJ2.getInstance();
-    
+    private double minBactSurface = 1;
+    private double maxBactSurface = 20;
+    private float bactErosion = 0.4f;
     
     
     
@@ -85,12 +79,6 @@ public class Tools {
             loader.loadClass("mcib3d.geom.Object3D");
         } catch (ClassNotFoundException e) {
             IJ.showMessage("Error", "3D ImageJ Suite not installed, please install from update site");
-            return false;
-        }
-        try {
-            loader.loadClass("net.haesleinhuepf.clij2.CLIJ2");
-        } catch (ClassNotFoundException e) {
-            IJ.showMessage("Error", "CLIJ not installed, please install from update site");
             return false;
         }
         return true;
@@ -184,7 +172,7 @@ public class Tools {
     }
     
     
-     /**
+    /**
      * Find channels name
      * @throws loci.common.services.DependencyException
      * @throws loci.common.services.ServiceException
@@ -266,15 +254,12 @@ public class Tools {
         }
         
         gd.addMessage("Bacteria detection", Font.getFont("Monospace"), Color.blue);
-        if (IJ.isWindows()) {
-            omniposeEnvDirPath = System.getProperty("user.home")+"\\miniconda3\\envs\\omnipose";
-            omniposeModelsPath = System.getProperty("user.home")+"\\.cellpose\\models\\";
-        }
         gd.addDirectoryField("Omnipose environment directory: ", omniposeEnvDirPath);
         gd.addDirectoryField("Omnipose models path: ", omniposeModelsPath);
-        gd.addNumericField("Min bacterium surface (µm2): ", minBactSurface);
-        gd.addNumericField("Max bacterium surface (µm2): ", maxBactSurface);
-        gd.addNumericField("Dilate (µm): ", bactDilate);
+        gd.addNumericField("Min bacterium area (µm2): ", minBactSurface);
+        gd.addNumericField("Max bacterium area (µm2): ", maxBactSurface);
+        gd.addNumericField("Bacterium erosion (µm): ", bactErosion);
+        
         gd.addMessage("Image calibration", Font.getFont("Monospace"), Color.blue);
         gd.addNumericField("XY calibration (µm):", cal.pixelWidth);
         gd.showDialog();
@@ -282,41 +267,29 @@ public class Tools {
         String[] ch = new String[channelsName.length];
         for (int i = 0; i < channelsName.length; i++)
             ch[i] = gd.getNextChoice();
-        if(gd.wasCanceled())
-           ch = null;
-        
+
         omniposeEnvDirPath = gd.getNextString();
         omniposeModelsPath = gd.getNextString();
         minBactSurface = (float) gd.getNextNumber();
         maxBactSurface = (float) gd.getNextNumber();
-        bactDilate = (float) gd.getNextNumber();;
+        bactErosion = (float) gd.getNextNumber();
+        
         cal.pixelWidth = cal.pixelHeight = gd.getNextNumber();
         cal.pixelDepth = 1;
+        pixelSurf = cal.pixelWidth*cal.pixelHeight;
+        
+        if (gd.wasCanceled())
+           ch = null;
+                
         return(ch);
     }
     
-    
-    /**
-     * Do Z projection
-     */
-    public ImagePlus doZProjection(ImagePlus img, int param) {
-        ZProjector zproject = new ZProjector();
-        zproject.setMethod(param);
-        zproject.setStartSlice(1);
-        zproject.setStopSlice(img.getNSlices());
-        zproject.setImage(img);
-        zproject.doProjection();
-       return(zproject.getProjection());
-    }
-    
-   
     
     /**
     * Detect bacteria with Omnipose
     */
     public Objects3DIntPopulation omniposeDetection(ImagePlus imgBact){
         ImagePlus imgIn = new Duplicator().run(imgBact);
-        imgIn.setCalibration(cal);
         
         // Set Omnipose settings
         CellposeTaskSettings settings = new CellposeTaskSettings(omniposeModelsPath+omniposeModel, 1, omniposeDiameter, omniposeEnvDirPath);
@@ -330,14 +303,18 @@ public class Tools {
         
         // Run Omnipose
         CellposeSegmentImgPlusAdvanced cellpose = new CellposeSegmentImgPlusAdvanced(settings, imgIn);
-        PrintStream console = System.out;
-        System.setOut(new NullPrintStream());
+        //PrintStream console = System.out;
+        //System.setOut(new NullPrintStream());
         ImagePlus imgOut = cellpose.run();
-        System.setOut(console);
+        //System.setOut(console);
         imgOut.setCalibration(cal);
+        
+        // Filter bacteria population
         Objects3DIntPopulation pop = new Objects3DIntPopulation(ImageHandler.wrap(imgOut));
-        removeTouchingBorder(pop, imgOut);
-        popFilterSize(pop, minBactSurface, maxBactSurface);        
+        pop = new Objects3DIntPopulationComputation(pop).getExcludeBorders(ImageHandler.wrap(imgOut), false);
+        pop = new Objects3DIntPopulationComputation(pop).getFilterSize(minBactSurface/pixelSurf, maxBactSurface/pixelSurf);
+        pop.resetLabels();
+        
         // Close images
         flush_close(imgIn);
         flush_close(imgOut);
@@ -345,78 +322,54 @@ public class Tools {
         return(pop);
     }
     
-    /**
-     * Remove object touching border image
-     */
-    public void removeTouchingBorder(Objects3DIntPopulation pop, ImagePlus img) {
-        ImageHandler imh = ImageHandler.wrap(img);
-        pop.getObjects3DInt().removeIf(p -> (new Object3DComputation(p).touchBorders(imh, false)));
-        pop.resetLabels();
-    }
-    
-    /**
-     * Remove object with size < min and size > max in microns
-     * @param pop
-     * @param min
-     * @param max
-     */
-    public void popFilterSize(Objects3DIntPopulation pop, double min, double max) {
-        pop.getObjects3DInt().removeIf(p -> (new MeasureVolume(p).getVolumeUnit() < min) || (new MeasureVolume(p).getVolumeUnit() > max));
-        pop.resetLabels();
-    }
-    
-   
-    /**
-     * Get population form labelled image
-     */
-    public Objects3DIntPopulation getPopFromImage(ImagePlus img) {
-        ImageLabeller labeller = new ImageLabeller();
-        ImageInt labels = labeller.getLabels(ImageHandler.wrap(img));
-        Objects3DIntPopulation pop = new Objects3DIntPopulation(labels);
-        return pop;
-    }
-    
-    
-    
+
     /**
      * Compute bacteria parameters and save them in file
      * @throws java.io.IOException
      */
-    public void saveResults(Objects3DIntPopulation bactPop, ImagePlus img, String imgName, String outDir, BufferedWriter resFile) throws IOException {
+    public Objects3DIntPopulation saveResults(Objects3DIntPopulation bactPop, ImagePlus img, String imgName, String outDir, BufferedWriter resFile) throws IOException {
         Objects3DIntPopulation bactBorderPop = new Objects3DIntPopulation();
         for (Object3DInt bact : bactPop.getObjects3DInt()) {
-            float bactLabel = bact.getLabel();
             double bactSurf = new MeasureVolume(bact).getValueMeasurement(MeasureVolume.VOLUME_UNIT);
             VoxelInt feret1Unit = new MeasureFeret(bact).getFeret1Unit();
             VoxelInt feret2Unit = new MeasureFeret(bact).getFeret2Unit();
             double bactLength = feret1Unit.distance(feret2Unit)*cal.pixelWidth;
-            float dil = (float)(bactDilate/cal.pixelWidth);
-            Object3DInt bactBorder = new Object3DComputation(bact).getObjectEdgeMorpho(dil, dil, dil, false);
+            
+            float erosion = (float)(bactErosion/cal.pixelWidth);
+            Object3DInt bactBorder = new Object3DComputation(bact).getObjectEdgeMorpho(erosion, erosion, erosion, false);
             Object3DInt bactInside = new Object3DComputation(bact).getObjectSubtracted(bactBorder);
+            
             double volbactInside = new MeasureVolume(bactInside).getValueMeasurement(MeasureVolume.VOLUME_UNIT);
-            double volbactBorder = new MeasureVolume(bactBorder).getValueMeasurement(MeasureVolume.VOLUME_UNIT);
-            if (volbactBorder != 0)
+            if (volbactInside != 0) {
                 bactBorderPop.addObject(bactBorder);
-            double bactInsideInt = (volbactInside != 0) ? new MeasureIntensity(bactInside, ImageHandler.wrap(img)).getValueMeasurement(MeasureIntensity.INTENSITY_SUM) : 0;
-            double bactBorderInt = (volbactBorder != 0) ? new MeasureIntensity(bactBorder, ImageHandler.wrap(img)).getValueMeasurement(MeasureIntensity.INTENSITY_SUM) : 0;
-            resFile.write(imgName+"\t"+bactLabel+"\t"+bactSurf+"\t"+bactLength+"\t"+bactInsideInt+"\t"+bactBorderInt+"\n");
+                double bactInsideInt = new MeasureIntensity(bactInside, ImageHandler.wrap(img)).getValueMeasurement(MeasureIntensity.INTENSITY_AVG);
+                double bactBorderInt = new MeasureIntensity(bactBorder, ImageHandler.wrap(img)).getValueMeasurement(MeasureIntensity.INTENSITY_AVG);
+                resFile.write(imgName+"\t"+bact.getLabel()+"\t"+bactSurf+"\t"+bactLength+"\t"+bactInsideInt+"\t"+bactBorderInt+"\n");
+            } else {
+                resFile.write(imgName+"\t"+bact.getLabel()+"\t"+bactSurf+"\t"+bactLength+"\n");
+            }
             resFile.flush();
         }
-        drawResults(img, bactBorderPop, "_bacteriaBorder.tif", imgName, outDir);
+        return bactBorderPop;
     }
     
     
-    // Save objects image
+    /**
+     * Draw results in images
+     */
     public void drawResults(ImagePlus img, Objects3DIntPopulation bactPop, String fileName, String imgName, String outDir) {
         ImageHandler imgObjects = ImageHandler.wrap(img).createSameDimensions();
         bactPop.drawInImage(imgObjects);
         IJ.run(imgObjects.getImagePlus(), "glasbey on dark", "");
+        
         ImagePlus[] imgColors = {imgObjects.getImagePlus(), null, null, img};
         ImagePlus imgOut = new RGBStackMerge().mergeHyperstacks(imgColors, true);
         imgOut.setCalibration(cal);
         FileSaver ImgObjectsFile = new FileSaver(imgOut);
         ImgObjectsFile.saveAsTiff(outDir+imgName+fileName);
-        flush_close(imgObjects.getImagePlus());
+        
+        imgObjects.closeImagePlus();
+        flush_close(imgOut);
     }
     
 }

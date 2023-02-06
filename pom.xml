@@ -12,7 +12,7 @@
         <packaging>jar</packaging>
 	<name>DNA_In_Border_Bacteria</name>
 	<description>
-            Find foci in bacteria
+            Measure DNA intensity in bacteria inside and contours
         </description>
 
 	<developers>

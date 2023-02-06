@@ -1,9 +1,8 @@
 import DNA_In_Border_Bacteria_Tools.Tools;
+
 import ij.*;
-import ij.gui.WaitForUserDialog;
 import ij.plugin.Duplicator;
 import ij.plugin.PlugIn;
-import ij.plugin.ZProjector;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -28,9 +27,10 @@ import org.scijava.util.ArrayUtils;
 
 
 /**
- * Detect bacteria with OmniPose and DNA with DOG
- * Measure bacteria size and intensity inside and on the border of bacteria
- * @author Orion-CIRB
+ * Detect bacteria with OmniPose
+ * Measure DNA intensity inside and on the edges of bacteria
+ * 
+ * @author ORION-CIRB
  */
 public class DNA_In_Border_Bacteria implements PlugIn {
     
@@ -50,6 +50,7 @@ public class DNA_In_Border_Bacteria implements PlugIn {
             if (imageDir == null) {
                 return;
             }   
+            
             // Find images with extension
             String file_ext = tools.findImageType(new File(imageDir));
             ArrayList<String> imageFiles = tools.findImages(imageDir, file_ext);
@@ -65,13 +66,12 @@ public class DNA_In_Border_Bacteria implements PlugIn {
                 outDir.mkdir();
             }
             String header = "Image name\tBacterium ID\tBacterium area (µm2)\tBacterium length (µm)\t" +
-                     "DNA intensity inside\tDNA intensity border\n";
+                     "DNA mean intensity inside bacterium\tDNA mean intensity on bacterium edges\n";
             FileWriter fwDistResults = new FileWriter(outDirResults + "results.xls", false);
             results = new BufferedWriter(fwDistResults);
             results.write(header);
             results.flush();
            
-            
             // Create OME-XML metadata store of the latest schema version
             ServiceFactory factory;
             factory = new ServiceFactory();
@@ -108,28 +108,31 @@ public class DNA_In_Border_Bacteria implements PlugIn {
                 // Open bacteria channel
                 int indexCh = ArrayUtils.indexOf(channels, chs[0]);
                 System.out.println("- Opening bacteria channel " + chs[0] + " -");
-                ImagePlus bactStack = BF.openImagePlus(options)[indexCh];
-                ImagePlus imgBact = (bactStack.getNSlices() == 1) ? new Duplicator().run(bactStack) : new Duplicator().run(bactStack, bactStack.getNSlices()/2, bactStack.getNSlices()/2);
-                tools.flush_close(bactStack);
+                ImagePlus stackBact = BF.openImagePlus(options)[indexCh];
+                ImagePlus imgBact = (stackBact.getNSlices() == 1) ? new Duplicator().run(stackBact) : new Duplicator().run(stackBact, stackBact.getNSlices()/2, stackBact.getNSlices()/2);
+                tools.flush_close(stackBact);
                 
                 // Detect bacteria with Omnipose
                 tools.print("- Detecting bacteria -");
                 Objects3DIntPopulation bactPop = tools.omniposeDetection(imgBact);
                 System.out.println(bactPop.getNbObjects() + " bacteria found");
-                tools.flush_close(imgBact);
                 
-                // Open DNA channel 1
+                // Open DNA channel
                 indexCh = ArrayUtils.indexOf(channels, chs[1]);
-                System.out.println("- Opening Dapi channel " + chs[1] + " -");
-                ImagePlus dnaStack = BF.openImagePlus(options)[indexCh];
-                ImagePlus imgDna = (dnaStack.getNSlices() == 1) ? new Duplicator().run(dnaStack) : new Duplicator().run(dnaStack, dnaStack.getNSlices()/2, dnaStack.getNSlices()/2);
-                tools.flush_close(dnaStack);
+                System.out.println("- Opening DNA channel " + chs[1] + " -");
+                ImagePlus stackDna = BF.openImagePlus(options)[indexCh];
+                ImagePlus imgDna = (stackDna.getNSlices() == 1) ? new Duplicator().run(stackDna) : new Duplicator().run(stackDna, stackDna.getNSlices()/2, stackDna.getNSlices()/2);
+                tools.flush_close(stackDna);
+                
                 // Save results
                 tools.print("- Saving results -");
-                tools.saveResults(bactPop, imgDna, rootName, outDirResults, results);
+                Objects3DIntPopulation bactBorderPop = tools.saveResults(bactPop, imgDna, rootName, outDirResults, results);
                 
                 // Save images
-                tools.drawResults(imgDna, bactPop, "_bacteria.tif", rootName, outDirResults);
+                tools.drawResults(imgBact, bactPop, "_bacteria.tif", rootName, outDirResults);
+                tools.drawResults(imgDna, bactBorderPop, "_edges.tif", rootName, outDirResults);
+                
+                tools.flush_close(imgBact);
                 tools.flush_close(imgDna);
             }
             results.close();
