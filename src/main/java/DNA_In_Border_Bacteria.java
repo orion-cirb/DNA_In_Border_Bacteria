@@ -66,7 +66,7 @@ public class DNA_In_Border_Bacteria implements PlugIn {
                 outDir.mkdir();
             }
             String header = "Image name\tBacterium ID\tBacterium area (µm2)\tBacterium length (µm)\t" +
-                     "DNA mean intensity inside bacterium\tDNA mean intensity on bacterium edges\n";
+                     "DNA mean intensity inside bacterium\tDNA mean intensity in bacterium edges\n";
             FileWriter fwDistResults = new FileWriter(outDirResults + "results.xls", false);
             results = new BufferedWriter(fwDistResults);
             results.write(header);
