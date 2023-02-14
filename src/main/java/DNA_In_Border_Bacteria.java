@@ -1,8 +1,8 @@
 import DNA_In_Border_Bacteria_Tools.Tools;
 
 import ij.*;
-import ij.plugin.Duplicator;
 import ij.plugin.PlugIn;
+import ij.plugin.ZProjector;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -109,7 +109,7 @@ public class DNA_In_Border_Bacteria implements PlugIn {
                 int indexCh = ArrayUtils.indexOf(channels, chs[0]);
                 System.out.println("- Opening bacteria channel " + chs[0] + " -");
                 ImagePlus stackBact = BF.openImagePlus(options)[indexCh];
-                ImagePlus imgBact = (stackBact.getNSlices() == 1) ? new Duplicator().run(stackBact) : new Duplicator().run(stackBact, stackBact.getNSlices()/2, stackBact.getNSlices()/2);
+                ImagePlus imgBact = tools.doZProjection(stackBact, ZProjector.AVG_METHOD);
                 tools.flush_close(stackBact);
                 
                 // Detect bacteria with Omnipose
@@ -121,7 +121,7 @@ public class DNA_In_Border_Bacteria implements PlugIn {
                 indexCh = ArrayUtils.indexOf(channels, chs[1]);
                 System.out.println("- Opening DNA channel " + chs[1] + " -");
                 ImagePlus stackDna = BF.openImagePlus(options)[indexCh];
-                ImagePlus imgDna = (stackDna.getNSlices() == 1) ? new Duplicator().run(stackDna) : new Duplicator().run(stackDna, stackDna.getNSlices()/2, stackDna.getNSlices()/2);
+                ImagePlus imgDna = tools.doZProjection(stackDna, ZProjector.MAX_METHOD);
                 tools.flush_close(stackDna);
                 
                 // Save results

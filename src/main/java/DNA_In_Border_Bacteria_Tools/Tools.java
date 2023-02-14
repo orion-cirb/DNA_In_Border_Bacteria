@@ -8,7 +8,9 @@ import ij.io.FileSaver;
 import ij.measure.Calibration;
 import ij.plugin.Duplicator;
 import fiji.util.gui.GenericDialogPlus;
+import ij.gui.WaitForUserDialog;
 import ij.plugin.RGBStackMerge;
+import ij.plugin.ZProjector;
 import java.awt.Color;
 import java.awt.Font;
 import java.io.BufferedWriter;
@@ -25,6 +27,7 @@ import loci.formats.meta.IMetadata;
 import loci.plugins.util.ImageProcessorReader;
 import mcib3d.geom2.Object3DComputation;
 import mcib3d.geom2.Object3DInt;
+import mcib3d.geom2.Object3DIntLabelImage;
 import mcib3d.geom2.Objects3DIntPopulation;
 import mcib3d.geom2.Objects3DIntPopulationComputation;
 import mcib3d.geom2.VoxelInt;
@@ -32,6 +35,8 @@ import mcib3d.geom2.measurements.MeasureFeret;
 import mcib3d.geom2.measurements.MeasureIntensity;
 import mcib3d.geom2.measurements.MeasureVolume;
 import mcib3d.image3d.ImageHandler;
+import mcib3d.image3d.processing.BinaryMorpho;
+import mcib3d.image3d.processing.FastFilters3D;
 import org.apache.commons.io.FilenameUtils;
 
 
@@ -286,6 +291,20 @@ public class Tools {
     
     
     /**
+     * Do Z projection
+     */
+    public ImagePlus doZProjection(ImagePlus img, int param) {
+        ZProjector zproject = new ZProjector();
+        zproject.setMethod(param);
+        zproject.setStartSlice(1);
+        zproject.setStopSlice(img.getNSlices());
+        zproject.setImage(img);
+        zproject.doProjection();
+       return(zproject.getProjection());
+    }
+    
+    
+    /**
     * Detect bacteria with Omnipose
     */
     public Objects3DIntPopulation omniposeDetection(ImagePlus imgBact){
@@ -336,8 +355,8 @@ public class Tools {
             double bactLength = feret1Unit.distance(feret2Unit)*cal.pixelWidth;
             
             float erosion = (float)(bactErosion/cal.pixelWidth);
-            Object3DInt bactBorder = new Object3DComputation(bact).getObjectEdgeMorpho(erosion, erosion, erosion, false);
-            Object3DInt bactInside = new Object3DComputation(bact).getObjectSubtracted(bactBorder);
+            Object3DInt bactInside = getMorphologicalObject2D(bact, BinaryMorpho.MORPHO_ERODE, erosion, erosion);
+            Object3DInt bactBorder = new Object3DComputation(bact).getObjectSubtracted(bactInside);
             
             double volbactInside = new MeasureVolume(bactInside).getValueMeasurement(MeasureVolume.VOLUME_UNIT);
             if (volbactInside != 0) {
@@ -353,6 +372,30 @@ public class Tools {
         return bactBorderPop;
     }
     
+    
+    private Object3DInt getMorphologicalObject2D(Object3DInt obj, int op, float radX, float radY) {
+        ImageHandler labelImage = new Object3DIntLabelImage(obj).getCroppedLabelImage(1, 1, 0, 1, false);
+
+        ImageHandler segImage2;
+        int filter = 0;
+        if (op == BinaryMorpho.MORPHO_DILATE) {
+            filter = FastFilters3D.MAX;
+        } else if (op == BinaryMorpho.MORPHO_ERODE) {
+            filter = FastFilters3D.MIN;
+        } else if (op == BinaryMorpho.MORPHO_CLOSE) {
+            filter = FastFilters3D.CLOSEGRAY;
+        } else if (op == BinaryMorpho.MORPHO_OPEN) {
+            filter = FastFilters3D.OPENGRAY;
+        }
+        segImage2 = FastFilters3D.filterImage(labelImage, filter, radX, radY, 0, 0, true);
+        segImage2.setOffset(labelImage);
+        segImage2.setCalibration(cal);
+
+        Object3DInt objMorpho = new Object3DInt(segImage2);
+        objMorpho.setLabel(obj.getLabel());
+        return objMorpho;
+    }
+
     
     /**
      * Draw results in images

@@ -99,6 +99,12 @@
 	  <version>2.5.3.1</version>
 	  <type>jar</type>
 	 </dependency>
+	 <dependency>
+	  <groupId>org.framagit.mcib3d</groupId>
+	  <artifactId>mcib3d-plugins</artifactId>
+	  <version>4.0.63</version>
+	  <type>jar</type>
+	 </dependency>
 	</dependencies>
         <repositories>
             <repository>
