@@ -7,15 +7,15 @@
 
 ### Images description
 
-2D/3D images taken with a x60 objective
+3D images taken with a x60 objective
 
-3 channels:
+2 channels:
   1. *DAPI:* DNA
-  3. *TL phase:* Bacteria
+  2. *TL phase:* Bacteria
 
 ### Plugin description
 
-* If 3D image, only keep middle z-slice
+* Perform max projection of DNA channel and average projection of bacteria channel
 * Detect bacteria with Ommipose
 * Measure bacteria length and area
 * Measure DAPI intensity inside and in edges of bacteria
@@ -27,5 +27,5 @@
 
 ### Version history
 
-Version 1 released on February 6, 2022
+Version 1 released on February 14, 2022
 
