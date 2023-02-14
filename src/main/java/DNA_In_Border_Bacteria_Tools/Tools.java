@@ -8,7 +8,6 @@ import ij.io.FileSaver;
 import ij.measure.Calibration;
 import ij.plugin.Duplicator;
 import fiji.util.gui.GenericDialogPlus;
-import ij.gui.WaitForUserDialog;
 import ij.plugin.RGBStackMerge;
 import ij.plugin.ZProjector;
 import java.awt.Color;

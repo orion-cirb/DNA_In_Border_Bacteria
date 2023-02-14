@@ -18,15 +18,14 @@
 * If 3D image, only keep middle z-slice
 * Detect bacteria with Ommipose
 * Measure bacteria length and area
-* Measure DAPI intensity in the middle and on the contour of bacteria
+* Measure DAPI intensity inside and in edges of bacteria
 
 ### Dependencies
 
 * **3DImageSuite** Fiji plugin
-* **CLIJ** Fiji plugin
 * **Omnipose** conda environment + *bact_phase_omnitorch_0* model
 
 ### Version history
 
-Version 1 released on February 3, 2022
+Version 1 released on February 6, 2022
 
