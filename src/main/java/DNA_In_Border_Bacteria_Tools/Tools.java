@@ -63,7 +63,7 @@ public class Tools {
     private double maxBactSurface = 20;
     private float bactErosion = 0.4f;
     
-    
+    private final Find_focused_slices focus = new Find_focused_slices();
     
     /**
      * Display a message in the ImageJ console and status bar
@@ -289,16 +289,20 @@ public class Tools {
     }
     
     
+    
     /**
-     * Do Z projection
+     * Do Z projection after finding best focussed slices
      */
     public ImagePlus doZProjection(ImagePlus img, int param) {
+        focus.setParams(80, 0, false, false);
+        ImagePlus imgFocus = focus.run(img);
         ZProjector zproject = new ZProjector();
         zproject.setMethod(param);
         zproject.setStartSlice(1);
         zproject.setStopSlice(img.getNSlices());
-        zproject.setImage(img);
+        zproject.setImage(imgFocus);
         zproject.doProjection();
+        flush_close(imgFocus);
        return(zproject.getProjection());
     }
     
